@@ -19,7 +19,9 @@ import subprocess
 import shlex
 import uuid
 import tarfile
+import time
 import os
+import shutil
 
 from loguru import logger
 
@@ -234,3 +236,64 @@ class Utils:
         os.remove(DEBIAN_BIN_NAME)
 
         return True
+
+
+    # ==========================================================
+    @staticmethod
+    def create_sky_widget(source, dest):
+        if not dest.endswith(".wgt"):
+            output_filename = f'{dest}.wgt'
+        else:
+            output_filename = dest
+
+        logger.info(f"Creating Sky widget of {source} as {output_filename}")
+        source = os.path.abspath(source)
+
+        # Make sure the bundle is at the root of the zip
+        source = source + '/'
+
+        if not os.path.exists(source):
+            logger.error("Cannot create tar - source directory does not exist")
+            return False
+
+        if os.path.exists(output_filename):
+            os.remove(output_filename)
+
+        # Build the widget
+        # Start by copying all the files for the widget to a temp directory
+        now = time.strftime("%Y%m%d-%H%M%S")
+        tmp_dir = f'/tmp/bundlegen/{now}_{Utils.get_random_string()}'
+
+        widget_build_dir = f'{tmp_dir}/wgt'
+
+        shutil.copytree(source, widget_build_dir, dirs_exist_ok=True, symlinks=True, ignore_dangling_symlinks=True)
+        shutil.copy('/home/vagrant/bundlegen/bundlegen/sky/resources/config.xml', widget_build_dir)
+        shutil.copy('/home/vagrant/bundlegen/bundlegen/sky/resources/icon.png', widget_build_dir)
+
+        # Zip up the contents of the widget
+        shutil.make_archive(f'{tmp_dir}/temp', 'zip', widget_build_dir)
+
+        # Sign the app and turn it into a wgt file
+        logger.info("Signing Sky widget")
+
+        command = f'/home/vagrant/bundlegen/bundlegen/sky/resources/create-sign-sky-app --skipvalid --inwgt {tmp_dir}/temp.zip --pkcs /home/vagrant/bundlegen/bundlegen/sky/resources/sky-debug-widget-cert.p12 --outwgt {output_filename}'
+
+        # Fix a weird error by setting OPENSSL_CONF env var to point to something
+        my_env = os.environ.copy()
+        my_env["OPENSSL_CONF"] = "/dev/null"
+
+        process = subprocess.Popen(shlex.split(
+            command), shell=False, stdout=subprocess.PIPE, env=my_env)
+
+        # Monitor the stdout and print to the screen
+        for line in iter(process.stdout.readline, b''):
+            logger.debug(line.strip().decode())
+
+        # Process has finished, clean up and get the return code
+        process.stdout.close()
+        return_code = process.wait()
+
+        # Cleanup
+        shutil.rmtree(tmp_dir)
+
+        return return_code == 0

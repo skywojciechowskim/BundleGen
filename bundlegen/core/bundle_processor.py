@@ -927,7 +927,7 @@ class BundleProcessor:
             return
 
         devicemapper_plugin = {
-            'required': True,
+            'required': False,
             'data' : {
                 'devices': dynamic_devices
             }

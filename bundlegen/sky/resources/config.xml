@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<widget xmlns="http://www.bskyb.com/ns/widgets" version="2.0">
+  <name short="netflix.dac" version="0.1.0">Netflix (DAC/Rialto)</name>
+  <icon src="icon.png" type="image/png"/>
+  <content src="." type="application/dac">
+    <platformFilters>
+      <platformVariant name="RDK-STB"/>
+      <platformVariant name="RDK-PANEL"/>
+      <region name="GBR"/>
+    </platformFilters>
+  </content>
+  <capabilities>
+    <capability name="rialto"/>
+  </capabilities>
+</widget>

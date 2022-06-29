@@ -71,8 +71,9 @@ def cli(verbose):
                                   Default mode is 'normal'. When apiversion info not available the effect is the same as mode 'host'""")
 @click.option('-r', '--createmountpoints', required=False, help='Create mount points in rootfs. Main usage for platforms with RO filesystem.', is_flag=True)
 @click.option('-x', '--appid', required=False, help='Optional. Application id. Can be used to override the id inside the metadata.')
+@click.option('-w', '--widget', required=False, help='Create Sky widget', is_flag=True)
 # @click.option('--disable-lib-mounts', required=False, help='Disable automatically bind mounting in libraries that exist on the STB. May increase bundle size', is_flag=True)
-def generate(image, outputdir, platform, searchpath, creds, ipk, appmetadata, yes, nodepwalking, libmatchingmode, createmountpoints, appid):
+def generate(image, outputdir, platform, searchpath, creds, ipk, appmetadata, yes, nodepwalking, libmatchingmode, createmountpoints, appid, widget):
     """Generate an OCI Bundle for a specified platform
     """
 
@@ -170,6 +171,11 @@ def generate(image, outputdir, platform, searchpath, creds, ipk, appmetadata, ye
             selected_platform.get_config(), app_metadata_dict)
         Utils.create_ipk(outputdir, outputdir)
         logger.success(f"Successfully generated bundle at {outputdir}.ipk")
+    elif widget:
+        if Utils.create_sky_widget(outputdir, outputdir):
+            logger.success(f"Created Sky widget at {outputdir}.wgt")
+        else:
+            sys.exit(3)
     else:
         tarball_settings = processor.platform_cfg.get('tarball')
         file_ownership_user = tarball_settings.get('fileOwnershipSameAsUser') if tarball_settings else None
@@ -185,3 +191,4 @@ def generate(image, outputdir, platform, searchpath, creds, ipk, appmetadata, ye
 
 
 cli.add_command(generate)
+
