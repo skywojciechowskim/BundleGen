@@ -44,7 +44,7 @@ Vagrant.configure("2") do |config|
     # Root tasks
     config.vm.provision "shell", inline: <<-SHELL
         dnf upgrade -y
-        dnf install -y make vim jq git skopeo go go-md2man
+        dnf install -y make vim jq git skopeo go go-md2man glibc.i686 zlib.i686
     SHELL
 
     config.vm.provision "shell", privileged: false, inline: <<-SHELL
@@ -56,13 +56,17 @@ Vagrant.configure("2") do |config|
         # Install umoci
         go get -d github.com/opencontainers/umoci
         cd $GOPATH/src/github.com/opencontainers/umoci/
+        git checkout v0.4.7
         make
         sudo make install
 
         # Clone BundleGen repo and install bundlegen
         cd ~
-        git clone git@github.com:rdkcentral/BundleGen.git bundlegen
+        chmod 700 ~/.ssh
+        chmod 600 ~/.ssh/*
+        git clone git@github.com:TeknoVenus/BundleGen.git bundlegen
         cd bundlegen
+        git checkout widget
         python3 -m venv .venv
         source .venv/bin/activate
         pip install -r requirements.txt
